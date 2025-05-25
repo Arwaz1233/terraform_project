@@ -75,6 +75,45 @@ resource_aws_lb_listener" "http_listener" {
   }
 }
 
+resource "aws_autoscaling_attachment" 'asg_attachment" {
+  autoscaling_group_name = aws_autoscaling_group.demoasg.id
+  alb_target_group_arm   = aws_lb_target_group.lt_ag.arm
+}
+
+resource "aws_autoscaling_policy" "scale_up" {
+  name                    = "sp"
+  scaling_adjustment_type = 1
+  adjustment_type         = "changeIncapacity"
+  cooldown        = 300
+  autoscaling_group_name = aws_autoscaling_group.demoasg.name
+}
+
+resource "aws_cloudwatch_metric_alarm" "cpuutilization_alarm" {
+  alarm_name           = "cpuutilization_alarm"
+  comparison-operator  = GreaterthenOrequaltoThreshold"
+  evaluation_periods   = 1
+  metric_name          = "cpuutilization"
+  namespace            = "AWS/EC2"
+  period               = 60
+  statistic            = "Average"
+  threshold            = 40
+  alarm_actions        = [aws_autoscaling_policy.scale_up.arn, aws_sns_topic.cpu.arn]
+  dimensions           = {
+  AutoscalingGroupName = aws_autoscaling_group.demoasg.name
+ }
+}
+resource "aws_sns_topic "cpu" {
+  name        = "cpu"
+  display_name = "cpu"
+}
+resource 'aws_sns_topic_subscription" "email-subscription" {
+  topic_arm  = aws-sns_topic.cpu.arn
+  protocol   = "email-json"
+  endpoit    = "mail_address"
+}
+
+
+
   
 
  
